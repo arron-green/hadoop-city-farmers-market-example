@@ -81,12 +81,11 @@ public class MarketRatings extends Configured implements Tool{
 
   static int printUsage(){
     System.out.println("MarketRatings [-m <maps>] [-r <reduces>] <input> <output>");
-    return 1;
+    return 0;
   }
 
   @Override
-  public int run(String[] in){
-    System.out.println("Run code here");
-    return 1;
+  public int run(String[] args){
+    return 0;
   }
 }
