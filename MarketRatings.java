@@ -8,6 +8,8 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
@@ -27,28 +29,29 @@ public class MarketRatings extends Configured implements Tool{
 
     @Override
     public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException{
-      String[] rows = value.toString().split("\t");
+      String[] rows = value.toString().split(",");
+      if(rows.length > 31){
+        String city = rows[4];
+        String state = rows[6];
 
-      String city = rows[4];
-      String state = rows[6];
+        int count = 0;
+        int rated = 0;
+        for (int col=11; col<=31; col++) //columns 11-31 contain data about what the market offers
+        {
+          if(rows[col].equals("Y")) 
+            count++;
+        }
 
-      int count = 0;
-      int rated = 0;
-      for (int col=11; col<=31; col++) //columns 11-31 contain data about what the market offers
-      {
-        if(rows[col].equals("Y")) 
-          count++;
+        count=(count*100)/21; //gets 1-100 rating of the market
+
+        if(count > 0){
+          rated = 1;
+        }
+
+        loc.set(city + ", " + state);
+        rating.set(1 + "\t" + rated + "\t" + count); //numTotal, numRated, rating
+        output.collect(loc, rating);
       }
-
-      count=(count*100)/21; //gets 1-100 rating of the market
-
-      if(count > 0){
-        rated = 1;
-      }
-
-      loc.set(city + ", " + state);
-      rating.set(1 + "\t" + rated + "\t" + count); //numTotal, numRated, rating
-      output.collect(loc, rating);
     }
   }
 
@@ -59,7 +62,7 @@ public class MarketRatings extends Configured implements Tool{
       int rating = 0;
       int numRated = 0;
       int numTotal = 0;
-
+      
       while(values.hasNext()){
         String tokens[] = (values.next().toString()).split("\t");
         int tot = Integer.parseInt(tokens[0]);
@@ -85,7 +88,27 @@ public class MarketRatings extends Configured implements Tool{
   }
 
   @Override
-  public int run(String[] args){
+  public int run(String[] args) throws IOException
+  {
     return 0;
+  }
+
+  public static void main(String[] args) throws IOException{
+    JobConf conf = new JobConf(MarketRatings.class);
+    conf.setJobName("MarketRatings");
+
+    conf.setOutputKeyClass(Text.class);
+    conf.setOutputValueClass(Text.class);
+
+    conf.setMapperClass(MapClass.class);
+    conf.setReducerClass(Reduce.class);
+
+    conf.setInputFormat(TextInputFormat.class);
+    conf.setOutputFormat(TextOutputFormat.class);
+
+    FileInputFormat.setInputPaths(conf, new Path(args[0]));
+    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+
+    JobClient.runJob(conf);
   }
 }
