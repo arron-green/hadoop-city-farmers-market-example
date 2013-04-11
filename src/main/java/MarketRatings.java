@@ -62,7 +62,7 @@ public class MarketRatings extends Configured implements Tool{
       int rating = 0;
       int numRated = 0;
       int numTotal = 0;
-      
+
       while(values.hasNext()){
         String tokens[] = (values.next().toString()).split("\t");
         int tot = Integer.parseInt(tokens[0]);
