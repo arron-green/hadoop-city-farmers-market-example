@@ -14,3 +14,6 @@ This project uses [gradle](http://www.gradle.org) as it's build tool
 #build the java jar file
 gradle jar
 ```
+
+## Output
+Grab the MarketRatings.jar file from `build/libs/MarketRatings.jar`
